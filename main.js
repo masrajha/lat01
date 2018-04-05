@@ -16,16 +16,22 @@ var markerRef = db.ref('markers');
 console.log(markerRef);
 
 markerRef.on('value', updateInfo, showErr);
+
 function updateInfo(data) {
     var marker = data.val();
     var info = "";
     kunci = Object.keys(data.val());
+    markers=[];
     for (var i = 0; i < kunci.length; i++) {
         console.log(marker[kunci[i]].coordinate.lat);
         var position = { lat: marker[kunci[i]].coordinate.lat, lng: marker[kunci[i]].coordinate.lng };
-        createMarker(position, null, marker[kunci[i]].properties.info).setMap(map);
-
+        var newmarker=createMarker(position, null, marker[kunci[i]].properties.info);
+        markers.push(newmarker);
     }
+    console.log(markers);
+    var markerCluster = new MarkerClusterer(map, markers,
+        {imagePath: 'images/m'});
+
 }
 function showErr(err) {
     document.getElementById('info').innerHTML = "Ada error " + err;
@@ -56,7 +62,7 @@ document.getElementById('simpan').addEventListener('click',
     });
 
 //inisialisasi peta
-var map = null;
+
 function initMap() {
     var center = { lat: -5.351645650506815, lng: 105.40080353027338 };
     var options = {
@@ -88,10 +94,12 @@ function createMarker(position, iconImg = null, info = null) {
                 content: info
             }
         );
-        
+
         marker.addListener('click', function (e) {
             infowindow.open(map, marker);
         });
     }
     return marker;
 }
+var map = null;
+var markers=[];
