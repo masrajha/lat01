@@ -12,8 +12,6 @@ firebase.initializeApp(config);
 
 
 var db = firebase.database();
-document.getElementById('info').innerHTML = "Info";
-
 var markerRef = db.ref('markers');
 console.log(markerRef);
 
@@ -23,14 +21,11 @@ function updateInfo(data) {
     var info = "";
     kunci = Object.keys(data.val());
     for (var i = 0; i < kunci.length; i++) {
-        // console.log(kunci[i]);
-        console.log(marker[kunci[i]].coord.lat);
-        info += marker[kunci[i]].coord.lat + "<br>";
+        console.log(marker[kunci[i]].coordinate.lat);
+        var position = { lat: marker[kunci[i]].coordinate.lat, lng: marker[kunci[i]].coordinate.lng };
+        createMarker(position, null, marker[kunci[i]].properties.info).setMap(map);
+
     }
-    document.getElementById('info').innerHTML = info;
-    // console.log(marker[kunci[0]].val());
-
-
 }
 function showErr(err) {
     document.getElementById('info').innerHTML = "Ada error " + err;
@@ -45,8 +40,58 @@ document.getElementById('simpan').addEventListener('click',
         // console.log("klik ",lat.value,lng.value,infomarker.value);
         markerRef.push(
             {
-                coord:{lat:lat.value,lng:lng.value},
-                info:infomarker.value 
+                type: 'point',
+                coordinate: { lat: parseFloat(lat.value), lng: parseFloat(lng.value) },
+                properties: {
+                    info: infomarker.value,
+                    categories: {
+                        kuliner: document.forms[0].cats[0].checked,
+                        kantor: document.forms[0].cats[1].checked,
+                        taman: document.forms[0].cats[2].checked,
+                        tempatibadah: document.forms[0].cats[3].checked
+                    }
+                }
             }
         );
     });
+
+//inisialisasi peta
+var map = null;
+function initMap() {
+    var center = { lat: -5.351645650506815, lng: 105.40080353027338 };
+    var options = {
+        center: center,
+        zoom: 10
+    };
+    map = new google.maps.Map(document.getElementById('map'), options);
+    createMarker(center).setMap(map);
+
+
+}
+
+navigator.geolocation.getCurrentPosition(showPosition);
+function showPosition(position) {
+    lat.value = position.coords.latitude;
+    lng.value = position.coords.longitude;
+}
+
+function createMarker(position, iconImg = null, info = null) {
+    var marker = new google.maps.Marker(
+        {
+            position: position,
+            icon: iconImg
+        }
+    );
+    if (info) {
+        var infowindow = new google.maps.InfoWindow(
+            {
+                content: info
+            }
+        );
+        
+        marker.addListener('click', function (e) {
+            infowindow.open(map, marker);
+        });
+    }
+    return marker;
+}
